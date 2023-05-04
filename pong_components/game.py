@@ -96,6 +96,12 @@ class Game:
             if not up and self.left_paddle.y + Paddle.HEIGHT > self.window_height:
                 return False
             self.right_paddle.move(up)
+        else:
+            if up and self.right_paddle.y - Paddle.VEL < 0:
+                return False
+            if not up and self.right_paddle.y + Paddle.HEIGHT > self.window_height:
+                return False
+            self.right_paddle.move(up)
         return True
     def loop(self):
         self.ball.move()

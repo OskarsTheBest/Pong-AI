@@ -4,6 +4,8 @@ import pygame
 class Paddle:
     COLOR = WHITE
     VEL = 4
+    WIDTH = 20
+    HEIGHT = 100
     def __init__(self, x, y, width, height):
         self.x = self.original_x = x
         self.y = self.original_y = y
