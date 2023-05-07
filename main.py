@@ -2,18 +2,34 @@ import pygame
 from pong_components import Game
 from settings import *
 
-window = pygame.display.set_mode((WIDTH, HEIGHT))
 
-game = Game(window, WIDTH, HEIGHT)
+
+
+
+width, height = 700, 500
+window = pygame.display.set_mode((width, height))
+
+game = Game(window, width, height)
 
 run = True
+clock = pygame.time.Clock()
 while run:
+    clock.tick(FPS)
     for event in pygame.event.get():
-        if event.type == pygame.QUITE:
+        if event.type == pygame.QUIT:
             run = False
             break
-    game.loop()
-    game.draw()
+    keys = pygame.key.get_pressed()    
+    if keys[pygame.K_w]:
+        game.move_paddle(left=False, up=True)
+    if keys[pygame.K_s]:
+        game.move_paddle(left=False, up=False)        
+
+    game_info = game.loop()
+    print(game_info.left_score, game_info.right_score)
+    game.draw(False, True)
     pygame.display.update()
+
     
-pygame.quite()
+    
+pygame.quit()

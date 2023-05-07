@@ -9,8 +9,8 @@ class Paddle:
     def __init__(self, x, y, width, height):
         self.x = self.original_x = x
         self.y = self.original_y = y
-        self.width = width
-        self.height = height 
+        self.width = 20
+        self.height = 100
     def draw(self, win):
         pygame.draw.rect(win, self.COLOR, (self.x, self.y, self.width, self.height))
         
