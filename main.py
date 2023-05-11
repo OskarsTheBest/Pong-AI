@@ -14,7 +14,8 @@ class PongGame:
         self.ball = self.game.ball
 
 
-    def ai_game(self):
+    def ai_game(self, genome, config):
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
         run = True
         clock = pygame.time.Clock()
         while run:
@@ -25,13 +26,21 @@ class PongGame:
                     break
             keys = pygame.key.get_pressed()    
             if keys[pygame.K_w]:
-                game.move_paddle(left=True, up=True)
+                self.game.move_paddle(left=True, up=True)
             if keys[pygame.K_s]:
-                game.move_paddle(left=True, up=False)        
+                self.game.move_paddle(left=True, up=False)
+                        
+            output = net.activate((self.right_paddle.y, self.ball.y , abs(self.right_paddle.x - self.ball.x)))
+            decis = output.index(max(output))
+            if decis == 0:
+                pass
+            elif decis == 1:
+                self.game.move_paddle(left=False, up=True)
+            else:
+                self.game.move_paddle(left=False, up=False)
 
-            game_info = game.loop()
-            print(game_info.left_score, game_info.right_score)
-            game.draw(False, True)
+            game_info = self.game.loop()
+            self.game.draw(True, False)
             pygame.display.update()
 
         pygame.quit()
@@ -46,18 +55,39 @@ class PongGame:
                 if event.type == pygame.QUIT:
                     quit()
                     
-            net1.activate((self.left_paddle.y, self.ball.y , abs(self.left_paddle.x - self.ball.x)))
-            net1.activate((self.right_paddle.y, self.ball.y , abs(self.right_paddle.x - self.ball.x)))
+            output1 = net1.activate((self.left_paddle.y, self.ball.y , abs(self.left_paddle.x - self.ball.x)))
+            decis1 = output1.index(max(output1))
+            if decis1 == 0:
+                pass
+            elif decis1 == 1:
+                self.game.move_paddle(left=True, up=True)
+            else:
+                self.game.move_paddle(left=True, up=False)
+                
+            output2 = net2.activate((self.right_paddle.y, self.ball.y , abs(self.right_paddle.x - self.ball.x)))
+            decis2 = output2.index(max(output2))
+            if decis2 == 0:
+                pass
+            elif decis2 == 1:
+                self.game.move_paddle(left=False, up=True)
+            else:
+                self.game.move_paddle(left=False, up=False)
+            print(output1, output2)
             game_info = self.game.loop()
             self.game.loop()
-            self.game.draw()
+            self.game.draw(False, True)
             pygame.display.update()
         
+            if game_info.left_score >= 1 or game_info.right_score >= 1 or game_info.right_hits > 50:
+                self.fitness_calc(genome1, genome2, game_info)
+                break
+                
         
+    def fitness_calc(self, genome1, genome2, game_info):
+        genome1.fitness += game_info.left_hits
+        genome2.fitness += game_info.right_hits
         
-        
-        
-        
+    
 def eval_genomes(genomes, config):
     width, height = 700, 500
     window = pygame.display.set_mode((width, height))
@@ -76,12 +106,14 @@ def eval_genomes(genomes, config):
     
     
 def run_neat(config):
+    #p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-3")
     p = neat.Population(config)
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(1))
     
+    #gets the best ai who hit 50 generations
     winner = p.run(eval_genomes, 50)
 
 
@@ -90,6 +122,6 @@ if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, "config.txt")
     
-    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, )
+    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path )
     
     run_neat(config)
