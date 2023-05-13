@@ -2,6 +2,7 @@ import pygame
 import neat
 import os
 import random
+import pickle
 from pong_components import Game
 from settings import *
 
@@ -24,19 +25,20 @@ class PongGame:
                 if event.type == pygame.QUIT:
                     run = False
                     break
-            keys = pygame.key.get_pressed()    
-            if keys[pygame.K_w]:
-                self.game.move_paddle(left=True, up=True)
-            if keys[pygame.K_s]:
-                self.game.move_paddle(left=True, up=False)
+
                         
             output = net.activate((self.right_paddle.y, self.ball.y , abs(self.right_paddle.x - self.ball.x)))
             decis = output.index(max(output))
             if decis == 0:
                 pass
             elif decis == 1:
-                self.game.move_paddle(left=False, up=True)
+                self.game.move_paddle(left=True, up=True)
             else:
+                self.game.move_paddle(left=True, up=False)
+            keys = pygame.key.get_pressed()    
+            if keys[pygame.K_w]:
+                self.game.move_paddle(left=False, up=True)
+            if keys[pygame.K_s]:
                 self.game.move_paddle(left=False, up=False)
 
             game_info = self.game.loop()
@@ -72,7 +74,6 @@ class PongGame:
                 self.game.move_paddle(left=False, up=True)
             else:
                 self.game.move_paddle(left=False, up=False)
-            print(output1, output2)
             game_info = self.game.loop()
             self.game.loop()
             self.game.draw(False, True)
@@ -106,16 +107,26 @@ def eval_genomes(genomes, config):
     
     
 def run_neat(config):
-    #p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-3")
+    #p = neat.Checkpointer.restore_checkpoint("neat-checkpoint-44")
     p = neat.Population(config)
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(1))
     
-    #gets the best ai who hit 50 generations
+    #gets the best ai who after 50 generations
     winner = p.run(eval_genomes, 50)
-
+    with open("best_ai.pickle", "wb") as f:
+        pickle.dump(winner, f)
+        
+def run_best_ai(config):
+    with open("best_ai.pickle", "rb") as f:
+        winner = pickle.load(f)
+    winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
+    width, height = 700, 500
+    window = pygame.display.set_mode((width, height))
+    pong_components = PongGame(window, width, height)
+    pong_components.ai_game(winner, config)
 
 
 if __name__ == "__main__":
@@ -124,4 +135,5 @@ if __name__ == "__main__":
     
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path )
     
-    run_neat(config)
+    #run_neat(config) # train ai
+    run_best_ai(config) # test ai against human player
